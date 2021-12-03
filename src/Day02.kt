@@ -1,3 +1,5 @@
+import utils.readInput
+
 fun main() {
     fun part1(input: List<String>): Int {
         var x = 0
