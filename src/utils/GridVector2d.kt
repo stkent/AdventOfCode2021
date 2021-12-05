@@ -12,6 +12,10 @@ data class GridVector2d(val x: Int, val y: Int) {
         return GridVector2d(x + other.x, y + other.y)
     }
 
+    operator fun times(int: Int): GridVector2d {
+        return GridVector2d(int * x, int * y)
+    }
+
     fun left90() = GridVector2d(-y, x)
 
     fun right90() = GridVector2d(y, -x)
