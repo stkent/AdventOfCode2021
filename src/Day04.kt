@@ -2,12 +2,9 @@ import com.google.common.math.IntMath.sqrt
 import utils.readInput
 import java.math.RoundingMode.UNNECESSARY
 
-const val boardSize = 5
-val numSeparator = Regex("\\s+")
+private data class Input(val drawOrder: List<Int>, val boards: List<Board>)
 
-data class Input(val drawOrder: List<Int>, val boards: List<Board>)
-
-data class Board(val nums: List<Int>) {
+private data class Board(val nums: List<Int>) {
     private val size: Int = sqrt(nums.size, UNNECESSARY)
 
     private fun numAt(row: Int, col: Int): Int = nums[row * size + col]
@@ -24,9 +21,11 @@ data class Board(val nums: List<Int>) {
 fun main() {
     fun parseInput(input: List<String>): Input {
         val drawOrder: List<Int> = input.first().split(',').map(String::toInt)
+
+        val numSeparator = Regex("\\s+")
         val boards: List<Board> = input
             .drop(1)
-            .chunked(boardSize + 1) { rows ->
+            .chunked(6) { rows ->
                 Board(
                     rows.drop(1)
                         .map(String::trim)
