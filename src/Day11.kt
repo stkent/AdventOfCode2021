@@ -57,14 +57,18 @@ fun main() {
         return map.values.count { it == 0 }
     }
 
+    fun energyMaps(input: List<String>): Sequence<EnergyMap> {
+        return generateSequence(input.toMap(), { map -> map.step() })
+    }
+
     fun part1(input: List<String>, steps: Int): Int {
-        return (1..steps)
-            .runningFold(input.toMap()) { map, _ -> map.step() }
+        return energyMaps(input)
+            .take(steps + 1)
             .sumOf(::flasherCount)
     }
 
     fun part2(input: List<String>): Int {
-        return generateSequence(input.toMap(), { map -> map.step() })
+        return energyMaps(input)
             .indexOfFirst { map -> map.values.all { energy -> energy == 0 } }
     }
 
