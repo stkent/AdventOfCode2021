@@ -1,3 +1,4 @@
+import com.google.common.collect.HashBiMap
 import utils.extensions.pow
 import utils.readInput
 
@@ -24,37 +25,43 @@ fun main() {
             .count { outPattern -> outPattern.size in setOf(2, 3, 4, 7) }
     }
 
-    val segmentsToDigitMap: Map<Set<Char>, Int> =
-        mapOf(
-            setOf('a', 'b', 'c', 'e', 'f', 'g') to 0,
-            setOf('c', 'f') to 1,
-            setOf('a', 'c', 'd', 'e', 'g') to 2,
-            setOf('a', 'c', 'd', 'f', 'g') to 3,
-            setOf('b', 'c', 'd', 'f') to 4,
-            setOf('a', 'b', 'd', 'f', 'g') to 5,
-            setOf('a', 'b', 'd', 'e', 'f', 'g') to 6,
-            setOf('a', 'c', 'f') to 7,
-            setOf('a', 'b', 'c', 'd', 'e', 'f', 'g') to 8,
-            setOf('a', 'b', 'c', 'd', 'f', 'g') to 9,
-        )
+    fun buildSegmentsToDigitMap(patterns: List<Set<Char>>): Map<Set<Char>, Int> {
+        val result = HashBiMap.create<Set<Char>, Int>()
 
-    // Returns a mapping between illuminated segments (keys) and active wires (values).
-    fun buildSegmentToWireMap(inPatterns: List<Set<Char>>): Map<Char, Char> {
-        return mapOf<Char, Char>()
+        fun segmentsFor(digit: Int): Set<Char> = result.inverse()[digit]!!
+
+        patterns
+            .sortedBy { pattern -> pattern.size }
+            .forEach { pattern ->
+                val size = pattern.size
+
+                val digit = when {
+                    size == 2 -> 1
+                    size == 3 -> 7
+                    size == 4 -> 4
+                    size == 5 && pattern.containsAll(segmentsFor(1)) -> 3
+                    size == 5 && pattern.intersect(segmentsFor(4)).size == 3 -> 5
+                    size == 5 -> 2
+                    size == 6 && !pattern.containsAll(segmentsFor(1)) -> 6
+                    size == 6 && pattern.intersect(segmentsFor(4)).size == 4 -> 9
+                    size == 6 -> 0
+                    size == 7 -> 8
+                    else -> error("Should not reach here.")
+                }
+
+                result += pattern to digit
+            }
+
+        return result
     }
 
     fun outValue(entry: String): Int {
         val (inPatterns, outPatterns) = parseEntry(entry)
 
-        val segmentToWireMap = buildSegmentToWireMap(inPatterns)
+        val segmentsToDigitMap = buildSegmentsToDigitMap(inPatterns)
 
         return outPatterns
-            .map { outPattern: Set<Char> ->
-                outPattern
-                    .map { outSegment: Char -> segmentToWireMap[outSegment]!! }
-                    .toSet()
-                    .let { activeWires: Set<Char> -> segmentsToDigitMap[activeWires]!! }
-            }
+            .map(segmentsToDigitMap::getValue)
             .reversed()
             .foldIndexed(initial = 0) { index, acc, digit -> acc + digit * 10.pow(index) }
     }
@@ -77,11 +84,6 @@ fun main() {
     """.trimIndent().split('\n')
 
     check(part1(testInput) == 26)
-
-    val additionalTestInputPart2 =
-        "acedgfb cdfbe gcdfa fbcad dab cefabd cdfgeb eafb cagedb ab | cdfeb fcadb cdfeb cdbaf"
-
-    check(outValue(additionalTestInputPart2) == 5353)
     check(outValue(testInput[0]) == 8394)
     check(outValue(testInput[1]) == 9781)
     check(outValue(testInput[2]) == 1197)
