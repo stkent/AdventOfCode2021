@@ -66,13 +66,13 @@ data class GridPoint2d(val x: Int, val y: Int) {
 
 }
 
-data class GridBounds2d(val left: Int, val right: Int, val bottom: Int, val top: Int)
+data class GridBounds2d(val xMin: Int, val xMax: Int, val yMin: Int, val yMax: Int)
 
 fun Iterable<GridPoint2d>.bounds(): GridBounds2d {
-    var boundsLeft = Int.MAX_VALUE
-    var boundsRight = Int.MIN_VALUE
-    var boundsBottom = Int.MAX_VALUE
-    var boundsTop = Int.MIN_VALUE
+    var xMin = Int.MAX_VALUE
+    var xMax = Int.MIN_VALUE
+    var yMin = Int.MAX_VALUE
+    var yMax = Int.MIN_VALUE
 
     val iterator = iterator()
     if (!iterator.hasNext()) {
@@ -81,16 +81,16 @@ fun Iterable<GridPoint2d>.bounds(): GridBounds2d {
 
     while (iterator.hasNext()) {
         val next = iterator.next()
-        boundsLeft = min(boundsLeft, next.x)
-        boundsRight = max(boundsRight, next.x)
-        boundsBottom = min(boundsBottom, next.y)
-        boundsTop = max(boundsTop, next.y)
+        xMin = min(xMin, next.x)
+        xMax = max(xMax, next.x)
+        yMin = min(yMin, next.y)
+        yMax = max(yMax, next.y)
     }
 
     return GridBounds2d(
-        left = boundsLeft,
-        right = boundsRight,
-        bottom = boundsBottom,
-        top = boundsTop
+        xMin = xMin,
+        xMax = xMax,
+        yMin = yMin,
+        yMax = yMax
     )
 }
