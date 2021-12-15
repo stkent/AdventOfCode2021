@@ -5,7 +5,7 @@ package utils
 import kotlin.math.min
 
 // Based on https://en.wikipedia.org/w/index.php?title=Dijkstra%27s_algorithm&oldid=931177808
-fun <T> T.shortestDistanceMap(getNeighbors: (T) -> Map<T, Int>): Map<T, Int> {
+fun <T> T.shortestDistanceMap(neighbors: T.() -> Map<T, Int>): Map<T, Int> {
     val unvisited = mutableMapOf<T, Int>()
         .withDefault { Int.MAX_VALUE }
         .also { it[this] = 0 }
@@ -16,7 +16,8 @@ fun <T> T.shortestDistanceMap(getNeighbors: (T) -> Map<T, Int>): Map<T, Int> {
         val (currentNode, currentPathLength) = unvisited.minByOrNull { (_, pathLength) -> pathLength }!!
         unvisited -= currentNode
 
-        getNeighbors(currentNode)
+        currentNode
+            .neighbors()
             .filterNot { (neighborNode, _) -> neighborNode in visited }
             .mapValues { (_, edgeLength) -> currentPathLength + edgeLength }
             .forEach { (neighborNode, neighborPathLength) ->
@@ -30,7 +31,7 @@ fun <T> T.shortestDistanceMap(getNeighbors: (T) -> Map<T, Int>): Map<T, Int> {
 }
 
 // Based on https://en.wikipedia.org/w/index.php?title=Dijkstra%27s_algorithm&oldid=931177808
-fun <T> T.shortestDistanceTo(target: T, getNeighbors: (T) -> Map<T, Int>): Int? {
+fun <T> T.shortestDistanceTo(target: T, neighbors: T.() -> Map<T, Int>): Int? {
     val unvisited = mutableMapOf<T, Int>()
         .withDefault { Int.MAX_VALUE }
         .also { it[this] = 0 }
@@ -42,7 +43,8 @@ fun <T> T.shortestDistanceTo(target: T, getNeighbors: (T) -> Map<T, Int>): Int? 
         unvisited.getValue(target).let { if (it == currentPathLength) return it }
         unvisited -= currentNode
 
-        getNeighbors(currentNode)
+        currentNode
+            .neighbors()
             .filterNot { (neighborNode, _) -> neighborNode in visited }
             .mapValues { (_, edgeLength) -> currentPathLength + edgeLength }
             .forEach { (neighborNode, neighborPathLength) ->

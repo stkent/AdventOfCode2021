@@ -32,9 +32,8 @@ fun main() {
         return start
             .shortestDistanceTo(
                 target = end,
-                getNeighbors = { current ->
-                    current
-                        .adjacentPoints()
+                neighbors = {
+                    adjacentPoints()
                         .filter { point -> point in bounds }
                         .associateWith { point -> riskMap[point]!! }
                 }
