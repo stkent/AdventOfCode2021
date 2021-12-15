@@ -2,6 +2,14 @@
 
 package utils.extensions
 
+fun <T : Any> MutableMap<T, Int>.putOrAdd(key: T, amount: Int) {
+    put(key, getOrDefault(key, 0) + amount)
+}
+
+fun <T : Any> MutableMap<T, Long>.putOrAdd(key: T, amount: Long) {
+    put(key, getOrDefault(key, 0) + amount)
+}
+
 /**
  * Removes the specified keys and their corresponding values from this map.
  *
