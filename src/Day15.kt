@@ -24,8 +24,7 @@ fun main() {
         }
     }
 
-    fun part1(input: List<String>): Int {
-        val riskMap = input.toMap()
+    fun solve(riskMap: Map<GridPoint2d, Int>): Int {
         val bounds = riskMap.keys.bounds()
         val start = GridPoint2d.origin
         val end = GridPoint2d(x = bounds.xMax, y = bounds.yMax)
@@ -43,8 +42,28 @@ fun main() {
             ?: error("Should not reach here.")
     }
 
+    fun part1(input: List<String>): Int {
+        val fullMap = input.toMap()
+        return solve(riskMap = fullMap)
+    }
+
     fun part2(input: List<String>): Int {
-        return 0
+        val smallMap = input.toMap()
+        val (_, maxX, _, maxY) = smallMap.keys.bounds()
+
+        val fullMap = buildMap<GridPoint2d, Int> {
+            smallMap.forEach { (inputPoint, inputRisk) ->
+                repeat(5) { nx ->
+                    repeat(5) { ny ->
+                        val point = inputPoint.shiftBy(dx = nx * (maxX + 1), dy = ny * (maxY + 1))
+                        val risk = 1 + (inputRisk + nx + ny - 1) % 9
+                        put(point, risk)
+                    }
+                }
+            }
+        }
+
+        return solve(riskMap = fullMap)
     }
 
     val testInput = """
@@ -61,7 +80,9 @@ fun main() {
     """.trimIndent().split('\n')
 
     check(part1(testInput) == 40)
+    check(part2(testInput) == 315)
 
     val input = readInput("Day15")
     println(part1(input))
+    println(part2(input))
 }
