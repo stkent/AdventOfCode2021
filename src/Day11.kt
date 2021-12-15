@@ -2,12 +2,11 @@ import utils.GridPoint2d
 import utils.extensions.elementCounts
 import utils.readInput
 
-private typealias EnergyMap = Map<Point, Int>
-private typealias Point = GridPoint2d
+private typealias EnergyMap = Map<GridPoint2d, Int>
 
 fun main() {
     fun List<String>.toMap(): EnergyMap {
-        fun energyAt(point: Point): Int {
+        fun energyAt(point: GridPoint2d): Int {
             return this
                 .getOrNull(point.y)
                 ?.getOrNull(point.x)
@@ -17,7 +16,7 @@ fun main() {
         return buildMap {
             for (y in this@toMap.indices) {
                 for (x in this@toMap[0].indices) {
-                    val point = Point(x, y)
+                    val point = GridPoint2d(x, y)
                     put(point, energyAt(point))
                 }
             }
@@ -26,7 +25,7 @@ fun main() {
 
     fun EnergyMap.step(): EnergyMap {
         val flashEnergy = 10
-        val flashed = mutableSetOf<Point>()
+        val flashed = mutableSetOf<GridPoint2d>()
         var liveMap = this.mapValues { (_, energy) -> energy + 1 }
 
         while (true) {
@@ -40,7 +39,7 @@ fun main() {
 
             val energyIncreases =
                 newFlashers
-                    .flatMap(Point::surroundingPoints)
+                    .flatMap(GridPoint2d::surroundingPoints)
                     .elementCounts()
 
             liveMap = liveMap.mapValues { (point, energy) ->

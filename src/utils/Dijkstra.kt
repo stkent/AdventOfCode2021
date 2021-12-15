@@ -30,7 +30,7 @@ fun <T> T.shortestPaths(getNeighbors: (T) -> Map<T, Int>): Map<T, Int> {
 }
 
 // Based on https://en.wikipedia.org/w/index.php?title=Dijkstra%27s_algorithm&oldid=931177808
-fun <T> T.shortestPathTo(target: T, getNeighbors: (T) -> Map<T, Int>): Int? {
+fun <T> T.shortestDistanceTo(target: T, getNeighbors: (T) -> Map<T, Int>): Int? {
     val unvisited = mutableMapOf<T, Int>()
         .withDefault { Int.MAX_VALUE }
         .also { it[this] = 0 }

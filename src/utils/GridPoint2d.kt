@@ -2,7 +2,6 @@
 
 package utils
 
-import java.lang.IllegalStateException
 import kotlin.math.abs
 import kotlin.math.hypot
 import kotlin.math.max
@@ -33,14 +32,6 @@ data class GridPoint2d(val x: Int, val y: Int) {
         return copy(y = -y)
     }
 
-    fun isInBounds(
-        xBounds: IntRange = Int.MIN_VALUE..Int.MAX_VALUE,
-        yBounds: IntRange = Int.MIN_VALUE..Int.MAX_VALUE
-    ): Boolean {
-
-        return x in xBounds && y in yBounds
-    }
-
     fun l1DistanceTo(other: GridPoint2d) = abs(x - other.x) + abs(y - other.y)
 
     fun l2DistanceTo(other: GridPoint2d) = hypot((x - other.x).toDouble(), (y - other.y).toDouble())
@@ -66,7 +57,13 @@ data class GridPoint2d(val x: Int, val y: Int) {
 
 }
 
-data class GridBounds2d(val xMin: Int, val xMax: Int, val yMin: Int, val yMax: Int)
+data class GridBounds2d(val xMin: Int, val xMax: Int, val yMin: Int, val yMax: Int) {
+
+    operator fun contains(point: GridPoint2d): Boolean {
+        return point.x in xMin..xMax && point.y in yMin..yMax
+    }
+
+}
 
 fun Iterable<GridPoint2d>.bounds(): GridBounds2d {
     var xMin = Int.MAX_VALUE
