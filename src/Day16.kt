@@ -61,7 +61,7 @@ sealed class Packet(open val version: Int) {
                 val lengthTypeId = contentBits[0]
                 var remainingBits = ""
 
-                val subPackets: List<Packet> = buildList {
+                val subPackets = buildList {
                     when (lengthTypeId) {
                         '0' -> {
                             var remainingSubPacketsBitsCount = contentBits.substring(1 until 16).toLong(radix = 2)
@@ -129,7 +129,29 @@ fun main() {
     }
 
     fun part1(input: String): Int {
-        return Packet.parseFirst(input.toBits()).packet.versionSum()
+        val (packet, _) = Packet.parseFirst(input.toBits())
+        return packet.versionSum()
+    }
+
+    fun Packet.resolve(): Long {
+        return when (this) {
+            is Literal -> value
+            is Operator -> when (typeId) {
+                0 -> packets.sumOf { packet -> packet.resolve() }
+                1 -> packets.fold(1) { acc, packet -> acc * packet.resolve() }
+                2 -> packets.minOf { packet -> packet.resolve() }
+                3 -> packets.maxOf { packet -> packet.resolve() }
+                5 -> if (packets[0].resolve() > packets[1].resolve()) 1 else 0
+                6 -> if (packets[0].resolve() < packets[1].resolve()) 1 else 0
+                7 -> if (packets[0].resolve() == packets[1].resolve()) 1 else 0
+                else -> error("Should not reach here.")
+            }
+        }
+    }
+
+    fun part2(input: String): Long {
+        val (packet, _) = Packet.parseFirst(input.toBits())
+        return packet.resolve()
     }
 
     val testInput0 = "D2FE28"
@@ -172,6 +194,25 @@ fun main() {
     check(part1(testInput5) == 23)
     check(part1(testInput6) == 31)
 
+    val testInput7 = "C200B40A82"
+    val testInput8 = "04005AC33890"
+    val testInput9 = "880086C3E88112"
+    val testInput10 = "CE00C43D881120"
+    val testInput11 = "D8005AC2A8F0"
+    val testInput12 = "F600BC2D8F"
+    val testInput13 = "9C005AC2F8F0"
+    val testInput14 = "9C0141080250320F1802104A08"
+
+    check(part2(testInput7) == 3L)
+    check(part2(testInput8) == 54L)
+    check(part2(testInput9) == 7L)
+    check(part2(testInput10) == 9L)
+    check(part2(testInput11) == 1L)
+    check(part2(testInput12) == 0L)
+    check(part2(testInput13) == 0L)
+    check(part2(testInput14) == 1L)
+
     val input = readInput("Day16").first()
     println(part1(input))
+    println(part2(input))
 }
