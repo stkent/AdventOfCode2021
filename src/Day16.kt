@@ -28,62 +28,59 @@ private fun String.toBits(): String {
         }
 }
 
-data class PacketParseResult<T : Packet>(val packet: T, val remainder: String)
+private sealed class Packet(open val version: Int) {
+    data class ParseResult<T : Packet>(val packet: T, val unusedBits: String)
 
-sealed class Packet(open val version: Int) {
     data class Literal(override val version: Int, val value: Long) : Packet(version) {
         companion object {
-            private const val bitsPerDigit = 5
-
-            fun from(version: Int, contentBits: String): PacketParseResult<Literal> {
-                var bitIndex = 0
+            fun from(version: Int, dataBits: String): ParseResult<Literal> {
+                var unusedBits = dataBits
 
                 val value =
                     buildString {
                         while (true) {
-                            val isLastDigit = contentBits[bitIndex] == '0'
-                            append(contentBits.substring(bitIndex + 1 until bitIndex + bitsPerDigit))
-                            bitIndex += bitsPerDigit
+                            val isLastDigit = unusedBits[0] == '0'
+                            append(unusedBits.drop(1).take(4))
+                            unusedBits = unusedBits.drop(5)
                             if (isLastDigit) break
                         }
                     }.toLong(radix = 2)
 
                 val packet = Literal(version = version, value = value)
-                val remainder = contentBits.substring(bitIndex)
-                return PacketParseResult(packet, remainder)
+                return ParseResult(packet, unusedBits = unusedBits)
             }
         }
     }
 
     data class Operator(override val version: Int, val typeId: Int, val packets: List<Packet>) : Packet(version) {
         companion object {
-            fun from(version: Int, typeId: Int, contentBits: String): PacketParseResult<Operator> {
-                val lengthTypeId = contentBits[0]
-                var remainingBits = ""
+            fun from(version: Int, typeId: Int, dataBits: String): ParseResult<Operator> {
+                var unusedBits: String
 
-                val subPackets = buildList {
-                    when (lengthTypeId) {
+                val subPackets: List<Packet> = buildList {
+                    when (dataBits[0]) {
                         '0' -> {
-                            var remainingSubPacketsBitsCount = contentBits.substring(1 until 16).toLong(radix = 2)
-                            remainingBits = contentBits.substring(16)
+                            var subPacketsBitCount = dataBits.substring(1 until 16).toLong(radix = 2)
+                            unusedBits = dataBits.substring(16)
 
-                            while (remainingSubPacketsBitsCount > 0) {
-                                val (packet, remainder) = parseFirst(remainingBits)
+                            while (subPacketsBitCount > 0) {
+                                val (packet, stillUnusedBits) = parse(unusedBits)
                                 add(packet)
-                                remainingSubPacketsBitsCount -= (remainingBits.length - remainder.length)
-                                remainingBits = remainder
+                                val usedBitsCount = unusedBits.length - stillUnusedBits.length
+                                subPacketsBitCount -= usedBitsCount
+                                unusedBits = stillUnusedBits
                             }
                         }
 
                         '1' -> {
-                            var remainingSubPacketCount = contentBits.substring(1 until 12).toLong(radix = 2)
-                            remainingBits = contentBits.substring(12)
+                            var subPacketCount = dataBits.substring(1 until 12).toLong(radix = 2)
+                            unusedBits = dataBits.substring(12)
 
-                            while (remainingSubPacketCount > 0) {
-                                val (packet, remainder) = parseFirst(remainingBits)
+                            while (subPacketCount > 0) {
+                                val (packet, stillUnusedBits) = parse(unusedBits)
                                 add(packet)
-                                remainingBits = remainder
-                                remainingSubPacketCount -= 1
+                                unusedBits = stillUnusedBits
+                                subPacketCount -= 1
                             }
                         }
 
@@ -92,29 +89,20 @@ sealed class Packet(open val version: Int) {
                 }
 
                 val packet = Operator(version = version, typeId = typeId, packets = subPackets)
-                val remainder = remainingBits
-                return PacketParseResult(packet, remainder)
+                return ParseResult(packet, unusedBits = unusedBits)
             }
         }
     }
 
     companion object {
-        fun parseFirst(bits: String): PacketParseResult<out Packet> {
+        fun parse(bits: String): ParseResult<out Packet> {
             val version = bits.substring(0 until 3).toInt(radix = 2)
             val typeId = bits.substring(3 until 6).toInt(radix = 2)
-            val contentBits = bits.substring(6..bits.lastIndex)
+            val dataBits = bits.substring(6..bits.lastIndex)
 
             return when (typeId) {
-                4 -> Literal.from(
-                    version = version,
-                    contentBits = contentBits
-                )
-
-                else -> Operator.from(
-                    version = version,
-                    typeId = typeId,
-                    contentBits = contentBits
-                )
+                4 -> Literal.from(version = version, dataBits = dataBits)
+                else -> Operator.from(version = version, typeId = typeId, dataBits = dataBits)
             }
         }
     }
@@ -129,29 +117,29 @@ fun main() {
     }
 
     fun part1(input: String): Int {
-        val (packet, _) = Packet.parseFirst(input.toBits())
+        val (packet, _) = Packet.parse(bits = input.toBits())
         return packet.versionSum()
     }
 
-    fun Packet.resolve(): Long {
+    fun Packet.calculate(): Long {
         return when (this) {
             is Literal -> value
             is Operator -> when (typeId) {
-                0 -> packets.sumOf { packet -> packet.resolve() }
-                1 -> packets.fold(1) { acc, packet -> acc * packet.resolve() }
-                2 -> packets.minOf { packet -> packet.resolve() }
-                3 -> packets.maxOf { packet -> packet.resolve() }
-                5 -> if (packets[0].resolve() > packets[1].resolve()) 1 else 0
-                6 -> if (packets[0].resolve() < packets[1].resolve()) 1 else 0
-                7 -> if (packets[0].resolve() == packets[1].resolve()) 1 else 0
+                0 -> packets.sumOf { packet -> packet.calculate() }
+                1 -> packets.fold(1) { acc, packet -> acc * packet.calculate() }
+                2 -> packets.minOf { packet -> packet.calculate() }
+                3 -> packets.maxOf { packet -> packet.calculate() }
+                5 -> if (packets[0].calculate() > packets[1].calculate()) 1 else 0
+                6 -> if (packets[0].calculate() < packets[1].calculate()) 1 else 0
+                7 -> if (packets[0].calculate() == packets[1].calculate()) 1 else 0
                 else -> error("Should not reach here.")
             }
         }
     }
 
     fun part2(input: String): Long {
-        val (packet, _) = Packet.parseFirst(input.toBits())
-        return packet.resolve()
+        val (packet, _) = Packet.parse(bits = input.toBits())
+        return packet.calculate()
     }
 
     val testInput0 = "D2FE28"
@@ -162,10 +150,10 @@ fun main() {
     val testInput5 = "C0015000016115A2E0802F182340"
     val testInput6 = "A0016C880162017C3686B18A3D4780"
 
-    check(Packet.parseFirst(testInput0.toBits()).packet == Literal(version = 6, value = 2021))
+    check(Packet.parse(testInput0.toBits()).packet == Literal(version = 6, value = 2021))
 
     check(
-        Packet.parseFirst(testInput1.toBits()).packet ==
+        Packet.parse(testInput1.toBits()).packet ==
             Operator(
                 version = 1,
                 typeId = 6,
@@ -177,7 +165,7 @@ fun main() {
     )
 
     check(
-        Packet.parseFirst(testInput2.toBits()).packet ==
+        Packet.parse(testInput2.toBits()).packet ==
             Operator(
                 version = 7,
                 typeId = 3,
