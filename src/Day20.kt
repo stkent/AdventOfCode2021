@@ -3,14 +3,12 @@ import utils.bounds
 import utils.extensions.collapseToString
 import utils.readInput
 
-typealias Point = GridPoint2d
-
 private const val LIT = '#'
 private const val UNLIT = '.'
 
 fun main() {
-    fun List<String>.litPixels(): Map<Point, Boolean> {
-        fun charAt(point: Point): Char? {
+    fun List<String>.litPixels(): Map<GridPoint2d, Boolean> {
+        fun charAt(point: GridPoint2d): Char? {
             return this
                 .getOrNull(point.y)
                 ?.getOrNull(point.x)
@@ -19,20 +17,20 @@ fun main() {
         return buildMap {
             for (y in this@litPixels.indices) {
                 for (x in this@litPixels[0].indices) {
-                    val point = Point(x, y)
+                    val point = GridPoint2d(x, y)
                     put(point, charAt(point) == LIT)
                 }
             }
         }
     }
 
-    fun List<String>.parse(): Pair<String, Map<Point, Boolean>> {
+    fun List<String>.parse(): Pair<String, Map<GridPoint2d, Boolean>> {
         val algorithm = this.first()
         val image = this.drop(2).litPixels()
         return algorithm to image
     }
 
-    algorithm@ fun String.enhance(image: Map<Point, Boolean>, iteration: Int): Map<Point, Boolean> {
+    algorithm@ fun String.enhance(image: Map<GridPoint2d, Boolean>, iteration: Int): Map<GridPoint2d, Boolean> {
         val oldBounds = image.keys.bounds()
         val xMin = oldBounds.xMin - 1
         val xMax = oldBounds.xMax + 1
@@ -53,7 +51,7 @@ fun main() {
         return buildMap {
             for (x in xMin..xMax) {
                 for (y in yMin..yMax) {
-                    val centerPoint = Point(x, y)
+                    val centerPoint = GridPoint2d(x, y)
 
                     val inputPoints =
                         buildSet {
@@ -63,7 +61,7 @@ fun main() {
 
                     val index =
                         inputPoints
-                            .sortedWith(compareBy(Point::y).thenBy(Point::x))
+                            .sortedWith(compareBy(GridPoint2d::y).thenBy(GridPoint2d::x))
                             .map { point ->
                                 when (point) {
                                     in image -> if (image[point]!!) '1' else '0'
