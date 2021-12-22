@@ -1,33 +1,36 @@
 import utils.GridPoint3d
+import utils.readInput
+
+private class Scan(val beacons: List<GridPoint3d>)
 
 fun main() {
-    fun List<String>.scans(): List<Set<GridPoint3d>> {
+    fun List<String>.scans(): List<Scan> {
         return buildList {
-            val nextScan = mutableSetOf<GridPoint3d>()
+            val beacons = mutableListOf<GridPoint3d>()
 
             for (line in this@scans) {
                 when {
                     line.startsWith("---") -> continue
 
                     line.isBlank() -> {
-                        add(nextScan.toSet())
-                        nextScan.clear()
+                        add(Scan(beacons.toList()))
+                        beacons.clear()
                     }
 
                     else -> {
                         val (x, y, z) = line.split(',').map(String::toInt)
-                        nextScan.add(GridPoint3d(x, y, z))
+                        beacons.add(GridPoint3d(x, y, z))
                     }
                 }
             }
 
-            add(nextScan.toSet())
+            add(Scan(beacons))
         }
     }
 
     // Source: http://www.euclideanspace.com/maths/algebra/matrix/transforms/examples/index.htm
     // (All transforms preserve right-hand rule.)
-    val allTransforms: Set<(GridPoint3d) -> GridPoint3d> =
+    val rotationalTransforms: Set<(GridPoint3d) -> GridPoint3d> =
         setOf(
             { GridPoint3d(x = +it.x, y = +it.y, z = +it.z) },
             { GridPoint3d(x = +it.x, y = -it.y, z = -it.z) },
@@ -60,26 +63,40 @@ fun main() {
             { GridPoint3d(x = +it.y, y = -it.z, z = -it.x) },
         )
 
-    fun Set<GridPoint3d>.forAllOrientations(): Set<Set<GridPoint3d>> {
-        return allTransforms
-            .map { transform -> this.map(transform).toSet() }
-            .toSet()
+    fun List<GridPoint3d>.rotations(): List<List<GridPoint3d>> {
+        return rotationalTransforms.map { transform -> this.map(transform) }
+    }
+
+    fun List<GridPoint3d>.shifts(targetBeacons: Collection<GridPoint3d>): List<List<GridPoint3d>> {
+        return targetBeacons
+            .map { targetBeacon ->
+                val shift = first().vectorTo(targetBeacon)
+                this.map { beacon -> beacon + shift }
+            }
     }
 
     fun beaconCount(overlapsNeeded: Int, input: List<String>): Int {
         val scans = input.scans()
+        val fixedBeacons = scans.first().beacons.toMutableSet()
+        val unfixedScans = ArrayDeque(scans.drop(1))
 
-        val referenceScan = scans.first()
-        val locatedBeacons = referenceScan
-        val scansToLocate = scans.drop(1).toMutableSet()
+        // TODO: infinite loop if we need to combine multiple unfixedScans to find a sufficiently large overlap with fixedBeacons
+        while (unfixedScans.isNotEmpty()) {
+            val unfixedScan = unfixedScans.removeFirst()
 
-        // TODO: more efficient partioning+merging algorithm?
-        while (scansToLocate.isNotEmpty()) {
-
-            break
+            unfixedScan
+                .beacons
+                .rotations()
+                .flatMap { rotatedBeacons -> rotatedBeacons.shifts(fixedBeacons) }
+                .firstOrNull { overlappingBeacons ->
+                    val overlapCount = (overlappingBeacons intersect fixedBeacons).size
+                    overlapCount >= overlapsNeeded
+                }
+                ?.also(fixedBeacons::addAll)
+                ?: run { unfixedScans.addLast(unfixedScan) }
         }
 
-        return 0
+        return fixedBeacons.size
     }
 
     fun part1(input: List<String>): Int {
@@ -102,9 +119,67 @@ fun main() {
         -2,1,0
     """.trimIndent().split('\n')
 
-    check(beaconCount(overlapsNeeded = 3, input = testInput0Embedded) == 3)
+//    check(beaconCount(overlapsNeeded = 3, input = testInput0Embedded) == 3)
 
     val testInput1 = """
+        --- scanner 0 ---
+        404,-588,-901
+        528,-643,409
+        -838,591,734
+        390,-675,-793
+        -537,-823,-458
+        -485,-357,347
+        -345,-311,381
+        -661,-816,-575
+        -876,649,763
+        -618,-824,-621
+        553,345,-567
+        474,580,667
+        -447,-329,318
+        -584,868,-557
+        544,-627,-890
+        564,392,-477
+        455,729,728
+        -892,524,684
+        -689,845,-530
+        423,-701,434
+        7,-33,-71
+        630,319,-379
+        443,580,662
+        -789,900,-551
+        459,-707,401
+
+        --- scanner 1 ---
+        686,422,578
+        605,423,415
+        515,917,-361
+        -336,658,858
+        95,138,22
+        -476,619,847
+        -340,-569,-846
+        567,-361,727
+        -460,603,-452
+        669,-402,600
+        729,430,532
+        -500,-761,534
+        -322,571,750
+        -466,-666,-811
+        -429,-592,574
+        -355,545,-477
+        703,-491,-529
+        -328,-685,520
+        413,935,-424
+        -391,539,-444
+        586,-435,557
+        -364,-763,-893
+        807,-499,-711
+        755,-354,-619
+        553,889,-390
+    """.trimIndent().split('\n')
+
+    check(part1(testInput1) == 38)
+
+    val testInput2 = """
         --- scanner 0 ---
         404,-588,-901
         528,-643,409
@@ -243,8 +318,8 @@ fun main() {
         30,-46,-14
     """.trimIndent().split('\n')
 
-//    check(part1(testInput1) == 79)
-//
-//    val input = readInput("Day19")
-//    println(part1(input))
+    check(part1(testInput2) == 79)
+
+    val input = readInput("Day19")
+    println(part1(input))
 }
