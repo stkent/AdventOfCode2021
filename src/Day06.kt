@@ -34,7 +34,6 @@ fun main() {
     }
 
     val testInput = "3,4,3,1,2"
-
     check(part1(testInput) == 5934L)
     check(part2(testInput) == 26984457539)
 

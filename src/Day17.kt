@@ -75,7 +75,6 @@ fun main() {
     }
 
     val testInput = GridBounds2d(xMin = 20, xMax = 30, yMin = -10, yMax = -5)
-
     check(part1(testInput) == 45)
     check(part2(testInput) == 112)
 

@@ -98,7 +98,6 @@ fun main() {
     }
 
     val testInput = 4L to 8L
-
     check(part1(testInput) == 739785L)
     check(part2(testInput) == 444356092776315L)
 

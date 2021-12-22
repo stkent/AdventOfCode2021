@@ -21,7 +21,6 @@ fun main() {
     }
 
     val testInput = "16,1,2,0,4,2,7,1,2,14"
-
     check(part1(testInput) == 37)
     check(part2(testInput) == 168)
 
