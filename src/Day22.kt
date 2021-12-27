@@ -1,30 +1,36 @@
+import utils.extensions.intersect
 import utils.readInput
 
 private data class Cube(
-    val xMin: Int,
-    val xMax: Int,
-    val yMin: Int,
-    val yMax: Int,
-    val zMin: Int,
-    val zMax: Int,
-)
+    val xs: IntRange,
+    val ys: IntRange,
+    val zs: IntRange,
+) {
 
-private data class RebootStep(val on: Boolean, val cube: Cube) {
+    fun intersect(other: Cube): Cube {
+        return Cube(
+            xs = xs.intersect(other.xs),
+            ys = ys.intersect(other.ys),
+            zs = zs.intersect(other.zs),
+        )
+    }
+
+    val unitCubeCount: Long = 1L * xs.count() * ys.count() * zs.count()
+}
+
+private data class Instruction(val cube: Cube, val on: Boolean) {
     companion object {
         private val regex =
             Regex("(on|off) x=(-?\\d+)\\.+(-?\\d+),y=(-?\\d+)\\.+(-?\\d+),z=(-?\\d+)\\.+(-?\\d+)")
 
-        fun from(s: String, min: Int = Int.MIN_VALUE, max: Int = Int.MAX_VALUE): RebootStep {
+        fun from(s: String, min: Int = Int.MIN_VALUE, max: Int = Int.MAX_VALUE): Instruction {
             val (on, xMin, xMax, yMin, yMax, zMin, zMax) = regex.matchEntire(s)!!.destructured
-            return RebootStep(
+            return Instruction(
                 on = on == "on",
                 cube = Cube(
-                    xMin = xMin.toInt().coerceAtLeast(min),
-                    xMax = xMax.toInt().coerceAtMost(max),
-                    yMin = yMin.toInt().coerceAtLeast(min),
-                    yMax = yMax.toInt().coerceAtMost(max),
-                    zMin = zMin.toInt().coerceAtLeast(min),
-                    zMax = zMax.toInt().coerceAtMost(max),
+                    xs = xMin.toInt().coerceAtLeast(min)..xMax.toInt().coerceAtMost(max),
+                    ys = yMin.toInt().coerceAtLeast(min)..yMax.toInt().coerceAtMost(max),
+                    zs = zMin.toInt().coerceAtLeast(min)..zMax.toInt().coerceAtMost(max),
                 )
             )
         }
@@ -32,26 +38,34 @@ private data class RebootStep(val on: Boolean, val cube: Cube) {
 }
 
 fun main() {
-    fun onCubeCount(steps: List<RebootStep>): Long {
-        val onCubes = mutableSetOf<Cube>()
-        // TODO
-        return 0L
+    fun onCubeCount(instructions: List<Instruction>): Long {
+        val signedCubes = mutableListOf<Pair<Cube, Int>>()
+
+        for ((newCube, on) in instructions) {
+            val signedIntersections =
+                signedCubes
+                    .map { (existingCube, sign) ->
+                        newCube.intersect(existingCube) to -sign
+                    }
+                    .filter { (intersection, _) ->
+                        intersection.unitCubeCount > 0
+                    }
+
+            signedCubes.addAll(signedIntersections)
+            if (on) signedCubes += newCube to 1
+        }
+
+        return signedCubes.sumOf { (cube, sign) -> cube.unitCubeCount * sign * 1L }
     }
 
     fun part1(input: List<String>): Long {
-        return onCubeCount(
-            steps = input.map { line ->
-                RebootStep.from(line, min = -50, max = 50)
-            }
-        )
+        val instructions = input.map { line -> Instruction.from(line, min = -50, max = 50) }
+        return onCubeCount(instructions)
     }
 
     fun part2(input: List<String>): Long {
-        return onCubeCount(
-            steps = input.map { line ->
-                RebootStep.from(line)
-            }
-        )
+        val instructions = input.map { line -> Instruction.from(line) }
+        return onCubeCount(instructions)
     }
 
     val testInput1 = """
