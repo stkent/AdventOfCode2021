@@ -1,25 +1,13 @@
-# AdventOfCode2021
+# Advent Of Code 2021
 
-Welcome to the Advent of Code[^aoc] Kotlin project created by [stkent][github] using the [Advent of Code Kotlin Template][template] delivered by JetBrains.
+Kotlin solutions for the [2021 puzzles](http://adventofcode.com/2021).
 
-In this repository, stkent is about to provide solutions for the puzzles using [Kotlin][kotlin] language.
+Other years' solutions:
 
-If you're stuck with Kotlin-specific questions or anything related to this template, check out the following resources:
-
-- [Kotlin docs][docs]
-- [Kotlin Slack][slack]
-- Template [issue tracker][issues]
-
-
-[^aoc]:
-    [Advent of Code][aoc] – An annual event of Christmas-oriented programming challenges started December 2015.
-    Every year since then, beginning on the first day of December, a programming puzzle is published every day for twenty-four days.
-    You can solve the puzzle and provide an answer using the language of your choice.
-
-[aoc]: https://adventofcode.com
-[docs]: https://kotlinlang.org/docs/home.html
-[github]: https://github.com/stkent
-[issues]: https://github.com/kotlin-hands-on/advent-of-code-kotlin-template/issues
-[kotlin]: https://kotlinlang.org
-[slack]: https://surveys.jetbrains.com/s3/kotlin-slack-sign-up
-[template]: https://github.com/kotlin-hands-on/advent-of-code-kotlin-template
+- [2023 (Kotlin)](https://github.com/stkent/AdventOfCode2023)
+- [2020 (Rust)](https://github.com/stkent/AdventOfCode2020)
+- [2019 (Kotlin)](https://github.com/stkent/AdventOfCode2019)
+- [2018 (Kotlin)](https://github.com/stkent/AdventOfCode2018)
+- [2017 (Kotlin)](https://github.com/stkent/AdventOfCode2017)
+- [2016 (Kotlin)](https://github.com/stkent/AdventOfCode2016)
+- [2015 (Python)](https://github.com/stkent/AdventOfCode2015)
